@@ -9,7 +9,6 @@ namespace ServidorMultihiloCsharp
     public class Servidor
     {
         private const int PUERTO = 31416;
-        // public bool Funcionando { set; get; } = true;
         private Socket socketEscucha;
 
         public void InicioServidor()
@@ -22,7 +21,7 @@ namespace ServidorMultihiloCsharp
             socketEscucha.Bind(ie); //OJO, si el puerto de escucha 
                                     //está ocupado lanza excepción.
             socketEscucha.Listen(5);
-            Console.WriteLine("A la espera");
+            Console.WriteLine("A la espera en puerto {0}", PUERTO);
             try
             {
                 while (true)
@@ -42,37 +41,39 @@ namespace ServidorMultihiloCsharp
 
         public void AtencionACliente(object o)
         {
+            // Faltaría el control de excepciones
             string mensaje;
             Boolean clienteActivo = true;
             Socket cliente = (Socket)o;
             IPEndPoint ieCliente = (IPEndPoint)cliente.RemoteEndPoint;
+
             Console.WriteLine("Conectado con el cliente {0} en el puerto {1}",
                             ieCliente.Address, ieCliente.Port);
 
             NetworkStream ns = new NetworkStream(cliente);
             StreamReader sr = new StreamReader(ns);
             StreamWriter sw = new StreamWriter(ns);
-            string welcome = "Bienvenido al servidor";
-            sw.WriteLine(welcome);
+
+            sw.WriteLine("Bienvenido al servidor");
             sw.Flush();
 
             while (clienteActivo)
             {
-                try
-                {
+                    // Recibe mensaje del cliente
                     mensaje = sr.ReadLine();
 
-                    //El  mensaje es null si se cierrael cliente de golpe
+                    //Se recibe null si se cierra el cliente de golpe
                     if (mensaje == null)
                         break;
 
+                    // Gestion del protocolo
                     switch (mensaje)
                     {
                         case "#salir":
                             clienteActivo = false;
                             break;
                         case "#apagar":
-                            // Funcionando = false;
+                            clienteActivo = false;
                             socketEscucha.Close();
                             break;
                         default:
@@ -83,15 +84,8 @@ namespace ServidorMultihiloCsharp
 
                     Console.WriteLine("{0} dice: {1}",
                         ieCliente.Address, mensaje);
-
-                }
-                catch (IOException)
-                {
-                    //Salta al acceder al socket
-                    //y no estar permitido
-                    clienteActivo=false;
-                }
             }
+
             Console.WriteLine("Conexión finalizada con {0}:{1}",
                     ieCliente.Address, ieCliente.Port);
 
